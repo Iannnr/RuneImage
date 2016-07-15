@@ -4,8 +4,6 @@ using System.IO;
 using System.Net;
 using Newtonsoft.Json;
 using ImageDownloader;
-using System.Globalization;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace RiotRuneImageDownloader
@@ -23,16 +21,17 @@ namespace RiotRuneImageDownloader
 
             while (true)
             {
-                Example();
+                DownloadImages();
             }
 
         }
 
         //Uses Riot's Static Data API to download all the currently available runes images and their name to a folder saved on my desktop (preferable to change)
-        static async void Example()
+        static async void DownloadImages()
         {
             while (count < 1)
             {
+                //want them to all run at the same time to save time, don't want to wait for completion
                 Task.Run(() => getChampionImage());
                 Task.Run(() => getRuneData());
                 Task.Run(() => getItemData());
@@ -120,8 +119,9 @@ namespace RiotRuneImageDownloader
                     if (item != null)
                     {
                         itemIDs.Add(i.ToString());
-
                         URLs.Add(item);
+
+                        //personal use for use in Android studio, each of these lists hold the name, description and a plain text explanation of the item
                         itemName.Add(itemFromJSON.Items[i].name);
                         itemDescription.Add(itemFromJSON.Items[i].description);
                         itemPlainText.Add(itemFromJSON.Items[i].plaintext);
@@ -152,7 +152,7 @@ namespace RiotRuneImageDownloader
             string text = "";
             List<string> champIDs = new List<string>();
 
-            string champURL = "http://ddragon.leagueoflegends.com/cdn/6.10.1/data/en_US/champion.json";
+            string champURL = "http://ddragon.leagueoflegends.com/cdn/6.14.2/data/en_US/champion.json";
 
             //special class created from Edit > Paste Special > Class from JSON
             var champJson = JsonConvert.DeserializeObject<SpecialRunerinos>(getJSONData(champURL));
@@ -170,6 +170,7 @@ namespace RiotRuneImageDownloader
             {
                 for (int j = 0; j < max; j++) //cycle through champions
                 {
+                    //URL for all JSON data regarding champions
                     string skinURL = "http://ddragon.leagueoflegends.com/cdn/6.14.2/data/en_US/champion/" +
                         lolChamps.championListNames()[j] + ".json";
                     var skinJson = JsonConvert.DeserializeObject<SkinCount>(getJSONData(skinURL));
@@ -177,8 +178,10 @@ namespace RiotRuneImageDownloader
                     for (int k = 0; k < x; k++)
                     {
                         string removeSKT = skinJson.champList[lolChamps.championListNames()[j]].skins[k].name;
+                        //"SKT" themed skins are currently unavailable to view but are still saved in the JSON data, removing them fixes 5 known crashes
                         if (!removeSKT.Contains("SKT"))
                         {
+                            //add URLs to lists that will be passed to the web client to download from
                             string champ = lolChamps.championListNames()[j];
                             int skinId = skinJson.champList[lolChamps.championListNames()[j]].skins[k].num;
                             skinURLs.Add(champ + "_" + skinId);
